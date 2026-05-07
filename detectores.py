@@ -42,6 +42,14 @@ class DetectorBasico(SignDetector):
         self.mascara_ideal = np.ones((self.tamano_fijo[1], self.tamano_fijo[0]), dtype=np.uint8)
 
     def detectar(self, imagen):
+        """_summary_
+
+        Args:
+            imagen (np.ndarray): _description_
+
+        Returns:
+            List[Panel]: _description_
+        """
         paneles_detectados = []
         candidatos = self._extraer_candidatos_mser(imagen)
 
@@ -54,6 +62,14 @@ class DetectorBasico(SignDetector):
         return self._eliminar_repetidas(paneles_detectados)
 
     def _extraer_candidatos_mser(self, imagen):
+        """_summary_
+
+        Args:
+            imagen (np.ndarray): _description_
+
+        Returns:
+            List[Tuple[int, int, int, int]]: _description_
+        """
         # 1. preprocesamiento
         lab = cv2.cvtColor(imagen, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
@@ -99,6 +115,15 @@ class DetectorBasico(SignDetector):
         return candidatos
 
     def _validar_color_y_correlacion(self, imagen, bbox):
+        """_summary_
+
+        Args:
+            imagen (np.ndarray): _description_
+            bbox (Tuple[int, int, int, int]): _description_
+
+        Returns:
+            float: _description_
+        """
         x1, y1, x2, y2 = bbox
         recorte = imagen[y1:y2, x1:x2]
 
@@ -128,6 +153,14 @@ class DetectorBasico(SignDetector):
         return float(score)
 
     def _eliminar_repetidas(self, lista_paneles):
+        """_summary_
+
+        Args:
+            lista_paneles (List[Panel]): _description_
+    
+        Returns:
+            List[Panel]: _description_
+        """
         if not lista_paneles:
             return []
 
@@ -178,7 +211,14 @@ class DetectorAvanzado(SignDetector):
         self.confidence_threshold = 0.50
     
     def _get_mser_adaptive(self, imagen_gris):
-        """ MSER adaptativo """
+        """_summary_ MSER ADAPTATIVO
+
+        Args:
+            imagen_gris (np.ndarray): _description_
+
+        Returns:
+            cv2.MSER: _description_
+        """
         contraste = np.std(imagen_gris)
         if contraste < 30:
             return cv2.MSER_create(delta=5, min_area=80, max_area=250000)
@@ -188,7 +228,14 @@ class DetectorAvanzado(SignDetector):
             return cv2.MSER_create(delta=12, min_area=140, max_area=300000)
     
     def _calcular_rango_hsv_adaptativo(self, imagen):
-        """ Detecta la niebla y ajusta la saturación mínima """
+        """_summary_ Detecta niebla y ajusta el rango HSV para azul en consecuencia
+
+        Args:
+            imagen (np.ndarray): _description_
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: _description_
+        """
         hsv = cv2.cvtColor(imagen, cv2.COLOR_BGR2HSV)
         contraste = np.std(hsv[:, :, 2])
         brillo_medio = np.mean(hsv[:, :, 2])
@@ -201,7 +248,14 @@ class DetectorAvanzado(SignDetector):
         return azul_bajo, azul_alto
     
     def _score_geometrico_simple(self, recorte):
-        """ Busca el marco del cartel usando Canny adaptativo y validamos con Hough """
+        """_summary_  Busca el marco del cartel usando Canny adaptativo y validamos con Hough 
+
+        Args:
+            recorte (np.ndarray): _description_
+
+        Returns:
+            float: _description_
+        """
         h, w = recorte.shape[:2]
         if h < 20 or w < 20: return 0.0
         
@@ -235,6 +289,14 @@ class DetectorAvanzado(SignDetector):
         else: return 0.3
     
     def detectar(self, imagen):
+        """_summary_
+
+        Args:
+            imagen (np.ndarray): _description_
+
+        Returns:
+            List[Panel]: _description_
+        """
         paneles_detectados = []
         azul_bajo, azul_alto = self._calcular_rango_hsv_adaptativo(imagen)
         
@@ -291,6 +353,14 @@ class DetectorAvanzado(SignDetector):
         return self._eliminar_repetidas_avanzado(paneles_detectados)
     
     def _eliminar_repetidas_avanzado(self, lista_paneles):
+        """_summary_
+
+        Args:
+            lista_paneles (List[Panel]): _description_
+
+        Returns:
+            List[Panel]: _description_
+        """
         if not lista_paneles: return []
         
         lista_paneles.sort(key=lambda p: p.score, reverse=True)
